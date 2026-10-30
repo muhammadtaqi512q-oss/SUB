@@ -1,0 +1,58 @@
+name: Auto Register Subdomain (No Token Required)
+
+on:
+  workflow_dispatch: # Manual run karne ke liye
+  push:
+    branches: [ main ]
+
+# GitHub ka apna default token (jo automatically milta hai, aapko banane ki zaroorat nahi)
+permissions:
+  contents: write
+  pages: write
+
+jobs:
+  register-and-setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Register Subdomain on Sitey (No Token Needed)
+        run: |
+          echo "Subdomain register kiya ja raha hai..."
+          
+          # Yahan apna subdomain aur domain set karein
+          SUBDOMAIN="luramoon-studio"
+          DOMAIN="sitey.my"
+          GITHUB_URL="${{ github.repository_owner }}.github.io"
+          
+          # API Call: Yahan pichle error ko theek kiya gaya hai (Accept header add kiya hai)
+          curl -s -X POST https://sitey.my/mcp \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json, text/event-stream" \
+            -d "{
+              \"jsonrpc\": \"2.0\",
+              \"method\": \"create_subdomain\",
+              \"params\": {
+                \"type\": \"CNAME\",
+                \"value\": \"$GITHUB_URL\",
+                \"domain\": \"$DOMAIN\",
+                \"subdomain\": \"$SUBDOMAIN\"
+              },
+              \"id\": 1
+            }"
+            
+          echo "Subdomain successfully create ho gaya!"
+
+      - name: Set Custom Domain in GitHub Pages
+        run: |
+          # CNAME file banayein taake GitHub Pages domain ko pehchan le
+          echo "luramoon-studio.sitey.my" > CNAME
+
+      - name: Commit and Push CNAME File
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add CNAME
+          git commit -m "Auto-set Custom Domain to luramoon-studio.sitey.my" || echo "No changes to commit"
+          git push
