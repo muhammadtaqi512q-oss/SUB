@@ -1,58 +1,58 @@
-name: Auto Register Subdomain (No Token Required)
+name: Auto Register Custom Domain
 
 on:
-  workflow_dispatch: # Manual run karne ke liye
+  workflow_dispatch:
   push:
     branches: [ main ]
 
-# GitHub ka apna default token (jo automatically milta hai, aapko banane ki zaroorat nahi)
 permissions:
   contents: write
   pages: write
+  id-token: write
 
 jobs:
-  register-and-setup:
+  register-domain:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Register Subdomain on Sitey (No Token Needed)
+      - name: Request Domain from Sitey (Tokenless API)
         run: |
-          echo "Subdomain register kiya ja raha hai..."
-          
-          # Yahan apna subdomain aur domain set karein
-          SUBDOMAIN="lyramoon-studio"
-          DOMAIN="sitey.my"
-          GITHUB_URL="${{ github.repository_owner }}.github.io"
-          
-          # API Call: Yahan pichle error ko theek kiya gaya hai (Accept header add kiya hai)
-          curl -s -X POST https://sitey.my/mcp \
+          echo "Domain request bheji ja rahi hai..."
+          RESPONSE=$(curl -s -X POST https://sitey.my/mcp \
             -H "Content-Type: application/json" \
             -H "Accept: application/json, text/event-stream" \
-            -d "{
-              \"jsonrpc\": \"2.0\",
-              \"method\": \"create_subdomain\",
-              \"params\": {
-                \"type\": \"CNAME\",
-                \"value\": \"$GITHUB_URL\",
-                \"domain\": \"$DOMAIN\",
-                \"subdomain\": \"$SUBDOMAIN\"
+            -d '{
+              "jsonrpc": "2.0",
+              "method": "create_subdomain",
+              "params": {
+                "type": "CNAME",
+                "value": "muhammadtaqi512q-oss.github.io",
+                "domain": "sitey.my",
+                "subdomain": "lyramoon-studio"
               },
-              \"id\": 1
-            }"
+              "id": 1
+            }')
             
-          echo "Subdomain successfully create ho gaya!"
+          echo "API Response: $RESPONSE"
+          
+          # Check agar error aya toh workflow fail na ho, bas aage badh jaye
+          if echo "$RESPONSE" | grep -q '"error"'; then
+            echo "⚠️ Sitey API ne error diya. Ho sakta hai domain pehle se bana ho ya service down ho."
+          else
+            echo "✅ Domain request successfully bhej di gayi hai!"
+          fi
 
-      - name: Set Custom Domain in GitHub Pages
+      - name: Set Custom Domain in CNAME file
         run: |
-          # CNAME file banayein taake GitHub Pages domain ko pehchan le
+          # CNAME file banayein taake GitHub Pages isay read kare
           echo "lyramoon-studio.sitey.my" > CNAME
-
-      - name: Commit and Push CNAME File
+          
+      - name: Commit and Push CNAME
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add CNAME
-          git commit -m "Auto-set Custom Domain to lyramoon-studio.sitey.my" || echo "No changes to commit"
+          git commit -m "Auto-set custom domain to lyramoon-studio.sitey.my" || echo "No changes to commit"
           git push
