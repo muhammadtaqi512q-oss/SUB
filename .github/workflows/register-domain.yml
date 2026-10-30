@@ -22,7 +22,7 @@ jobs:
           echo "Subdomain register kiya ja raha hai..."
           
           # Yahan apna subdomain aur domain set karein
-          SUBDOMAIN="luramoon-studio"
+          SUBDOMAIN="lyramoon-studio"
           DOMAIN="sitey.my"
           GITHUB_URL="${{ github.repository_owner }}.github.io"
           
@@ -47,12 +47,12 @@ jobs:
       - name: Set Custom Domain in GitHub Pages
         run: |
           # CNAME file banayein taake GitHub Pages domain ko pehchan le
-          echo "luramoon-studio.sitey.my" > CNAME
+          echo "lyramoon-studio.sitey.my" > CNAME
 
       - name: Commit and Push CNAME File
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add CNAME
-          git commit -m "Auto-set Custom Domain to luramoon-studio.sitey.my" || echo "No changes to commit"
+          git commit -m "Auto-set Custom Domain to lyramoon-studio.sitey.my" || echo "No changes to commit"
           git push
